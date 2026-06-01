@@ -1,0 +1,6 @@
+student_id,subject,topic,score,date
+1,Operating Systems,Deadlocks,35,2026-05-01
+1,Operating Systems,Memory Management,40,2026-05-01
+1,DBMS,Transactions,50,2026-04-15
+2,Operating Systems,CPU Scheduling,80,2026-04-20
+3,Computer Networks,Routing,55,2026-03-18
