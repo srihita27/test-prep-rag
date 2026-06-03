@@ -172,9 +172,31 @@ if "questions" in st.session_state:
     if "results" not in st.session_state:
         st.session_state["results"] = {}
 
+    if "score" not in st.session_state:
+        st.session_state["score"] = 0
+
     st.divider()
 
     st.header("Generated Test")
+    score = sum(
+        1
+        for result in
+        st.session_state["results"].values()
+        if result["status"] == "correct"
+    )
+    st.metric(
+        "Current Score",
+        f"{score}/{len(questions)}"
+    )
+
+    percentage = round(
+        (score / len(questions)) * 100,
+        2
+    )
+    st.metric(
+        "Percentage",
+        f"{percentage}%"
+    )
 
     for i, q in enumerate(questions):
 
@@ -205,15 +227,16 @@ if "questions" in st.session_state:
                 }
 
             elif answer == q["correct"]:
-
                 st.session_state["results"][i] = {
-                    "status": "correct"
+                    "status": "correct",
+                    "selected": answer
                 }
 
             else:
 
                 st.session_state["results"][i] = {
-                    "status": "wrong"
+                    "status": "wrong",
+                    "selected": answer
                 }
 
         # Show previously stored result
