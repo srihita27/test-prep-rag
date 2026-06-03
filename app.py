@@ -156,10 +156,9 @@ if st.button("Generate Test"):
         )
 
     st.session_state["questions"] = (
-    result["mcqs"]
-)
-
-st.session_state["results"] = {}
+    result["mcqs"] 
+    )
+    st.session_state["results"] = {}
 
 # ==========================
 # DISPLAY TEST
