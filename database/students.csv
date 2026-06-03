@@ -1,6 +1,6 @@
-student_id,name,email,avg_score,tests_taken
-1,Srihita,srihita@gmail.com,58,8
-2,Ram,ram@gmail.com,75,6
-3,Priya,priya@gmail.com,68,5
-4,Arjun,arjun@gmail.com,45,4
-5,Neha,neha@gmail.com,80,10
+student_id,name,avg_score
+1,Srihita Kotagiri,78
+2,Rahul Sharma,65
+3,Ananya Reddy,82
+4,Vikram Patel,55
+5,Priya Verma,71

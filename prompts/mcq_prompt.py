@@ -5,43 +5,34 @@ def build_prompt(
 ):
 
     return f"""
-You are an expert university professor.
+You are an expert exam setter.
 
-SYLLABUS CONTENT:
+Context:
 {context}
 
-STUDENT WEAK TOPICS:
+Weak Topics:
 {weak_topics}
 
-DIFFICULTY:
+Generate EXACTLY 10 MCQs.
+
+Return ONLY valid JSON.
+
+Example:
+
+[
+ {{
+   "question":"What is a compiler?",
+   "options": {{
+      "A":"Option A",
+      "B":"Option B",
+      "C":"Option C",
+      "D":"Option D"
+   }},
+   "correct":"B",
+   "explanation":"Explanation here"
+ }}
+]
+
+Difficulty:
 {difficulty}
-
-Generate exactly 10 MCQs.
-
-Requirements:
-
-- Cover the syllabus.
-- Prioritize weak topics.
-- 4 options each.
-- One correct answer.
-- Include explanation.
-- Avoid duplicates.
-
-Return valid markdown.
-
-Format:
-
-## Question 1
-
-Question
-
-A)
-B)
-C)
-D)
-
-Correct Answer:
-Explanation:
-
-Continue until Question 10.
 """

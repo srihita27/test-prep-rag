@@ -1,23 +1,78 @@
 import os
-
 import streamlit as st
 
 from rag.pdf_loader import load_pdf
-
-from rag.vector_store import (
-    create_vector_store
-)
+from rag.vector_store import create_vector_store
 
 from orchestration.graph import graph
 
-st.title(
-    "AI Test Preparation Engine"
+from agents.student_agent import StudentAgent
+
+
+st.set_page_config(
+    page_title="AI Test Preparation Engine",
+    layout="wide"
 )
 
-student_id = st.number_input(
-    "Student ID",
-    value=1
+st.title("AI Test Preparation Engine")
+
+# ==========================
+# STUDENT MANAGEMENT
+# ==========================
+
+student_agent = StudentAgent()
+
+students = student_agent.get_all_students()
+
+student_options = {
+    f"{s['name']} (ID: {s['student_id']})":
+    s["student_id"]
+    for s in students
+}
+
+st.subheader("Select Student")
+
+selected_student = st.selectbox(
+    "Available Students",
+    list(student_options.keys())
 )
+
+student_id = student_options[selected_student]
+
+# ==========================
+# ENROLL NEW STUDENT
+# ==========================
+
+with st.expander("Enroll New Student"):
+
+    new_name = st.text_input(
+        "Student Name"
+    )
+
+    if st.button("Enroll Student"):
+
+        if new_name.strip():
+
+            new_id = (
+                student_agent
+                .enroll_student(new_name)
+            )
+
+            st.success(
+                f"Student enrolled successfully! New ID: {new_id}"
+            )
+
+            st.rerun()
+
+        else:
+
+            st.warning(
+                "Please enter a valid name."
+            )
+
+# ==========================
+# TEST SETTINGS
+# ==========================
 
 difficulty = st.selectbox(
     "Difficulty",
@@ -33,42 +88,133 @@ pdf = st.file_uploader(
     type=["pdf"]
 )
 
+# ==========================
+# GENERATE TEST
+# ==========================
+
 if st.button("Generate Test"):
 
     if pdf is None:
-        st.error("Upload a PDF first.")
+
+        st.error(
+            "Please upload a syllabus PDF."
+        )
+
         st.stop()
 
-    os.makedirs("uploads", exist_ok=True)
-    os.makedirs("chroma_db", exist_ok=True)
+    os.makedirs(
+        "uploads",
+        exist_ok=True
+    )
+
+    os.makedirs(
+        "chroma_db",
+        exist_ok=True
+    )
 
     file_path = os.path.join(
         "uploads",
         pdf.name
     )
 
-    with open(file_path, "wb") as f:
-        f.write(pdf.getbuffer())
+    with open(
+        file_path,
+        "wb"
+    ) as f:
 
-    docs = load_pdf(file_path)
+        f.write(
+            pdf.getbuffer()
+        )
 
-    pdf_name = pdf.name.replace(
-        ".pdf",
-        ""
+    with st.spinner(
+        "Processing syllabus..."
+    ):
+
+        docs = load_pdf(
+            file_path
+        )
+
+        pdf_name = (
+            pdf.name
+            .replace(".pdf", "")
+        )
+
+        persist_dir = (
+            create_vector_store(
+                docs,
+                pdf_name
+            )
+        )
+
+        result = graph.invoke(
+            {
+                "student_id": student_id,
+                "subject": pdf_name,
+                "difficulty": difficulty,
+                "persist_dir": persist_dir
+            }
+        )
+
+    st.session_state["questions"] = (
+        result["mcqs"]
     )
 
-    persist_dir = create_vector_store(
-        docs,
-        pdf_name
+# ==========================
+# DISPLAY TEST
+# ==========================
+
+if "questions" in st.session_state:
+
+    questions = (
+        st.session_state["questions"]
     )
 
-    result = graph.invoke(
-        {
-            "student_id": student_id,
-            "subject": pdf_name,
-            "difficulty": difficulty,
-            "persist_dir": persist_dir
-        }
-    )
+    st.divider()
 
-    st.write(result["mcqs"])
+    st.header("Generated Test")
+
+    for i, q in enumerate(questions):
+
+        st.subheader(
+            f"Question {i+1}"
+        )
+
+        answer = st.radio(
+            q["question"],
+            list(
+                q["options"].keys()
+            ),
+            format_func=lambda x:
+            f"{x}. {q['options'][x]}",
+            key=f"q{i}"
+        )
+
+        if st.button(
+            f"Check Answer {i+1}",
+            key=f"check{i}"
+        ):
+
+            if answer == q["correct"]:
+
+                st.success(
+                    "✅ Correct Answer"
+                )
+
+                st.info(
+                    q["explanation"]
+                )
+
+            else:
+
+                st.error(
+                    "❌ Wrong Answer"
+                )
+
+                st.write(
+                    f"Correct Answer: "
+                    f"{q['correct']}"
+                )
+
+                st.info(
+                    q["explanation"]
+                )
