@@ -156,8 +156,10 @@ if st.button("Generate Test"):
         )
 
     st.session_state["questions"] = (
-        result["mcqs"]
-    )
+    result["mcqs"]
+)
+
+st.session_state["results"] = {}
 
 # ==========================
 # DISPLAY TEST
@@ -165,9 +167,11 @@ if st.button("Generate Test"):
 
 if "questions" in st.session_state:
 
-    questions = (
-        st.session_state["questions"]
-    )
+    questions = st.session_state["questions"]
+
+    # Store answer results permanently
+    if "results" not in st.session_state:
+        st.session_state["results"] = {}
 
     st.divider()
 
@@ -195,26 +199,55 @@ if "questions" in st.session_state:
             key=f"check{i}"
         ):
 
-            # No option selected
             if answer is None:
+
+                st.session_state["results"][i] = {
+                    "status": "unanswered"
+                }
+
+            elif answer == q["correct"]:
+
+                st.session_state["results"][i] = {
+                    "status": "correct"
+                }
+
+            else:
+
+                st.session_state["results"][i] = {
+                    "status": "wrong"
+                }
+
+        # Show previously stored result
+        if i in st.session_state["results"]:
+
+            result = (
+                st.session_state["results"][i]
+            )
+
+            if result["status"] == "unanswered":
 
                 st.warning(
                     "⚠️ Please select an option first."
                 )
 
-            # Correct answer
-            elif answer == q["correct"]:
+            elif result["status"] == "correct":
 
                 st.success(
                     "✅ Correct Answer"
                 )
 
-                st.info(
-                    f"Explanation: {q['explanation']}"
+                st.write(
+                    f"**Selected Answer:** "
+                    f"{q['correct']}. "
+                    f"{q['options'][q['correct']]}"
                 )
 
-            # Wrong answer
-            else:
+                st.info(
+                    f"Explanation: "
+                    f"{q['explanation']}"
+                )
+
+            elif result["status"] == "wrong":
 
                 st.error(
                     "❌ Wrong Answer"
@@ -227,5 +260,6 @@ if "questions" in st.session_state:
                 )
 
                 st.info(
-                    f"Explanation: {q['explanation']}"
+                    f"Explanation: "
+                    f"{q['explanation']}"
                 )
