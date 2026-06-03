@@ -180,13 +180,14 @@ if "questions" in st.session_state:
         )
 
         answer = st.radio(
-            q["question"],
+            f"{q['question']}",
             list(
                 q["options"].keys()
             ),
             format_func=lambda x:
             f"{x}. {q['options'][x]}",
-            key=f"q{i}"
+            key=f"q{i}",
+            index=None
         )
 
         if st.button(
@@ -194,16 +195,25 @@ if "questions" in st.session_state:
             key=f"check{i}"
         ):
 
-            if answer == q["correct"]:
+            # No option selected
+            if answer is None:
+
+                st.warning(
+                    "⚠️ Please select an option first."
+                )
+
+            # Correct answer
+            elif answer == q["correct"]:
 
                 st.success(
                     "✅ Correct Answer"
                 )
 
                 st.info(
-                    q["explanation"]
+                    f"Explanation: {q['explanation']}"
                 )
 
+            # Wrong answer
             else:
 
                 st.error(
@@ -211,10 +221,11 @@ if "questions" in st.session_state:
                 )
 
                 st.write(
-                    f"Correct Answer: "
-                    f"{q['correct']}"
+                    f"**Correct Answer:** "
+                    f"{q['correct']}. "
+                    f"{q['options'][q['correct']]}"
                 )
 
                 st.info(
-                    q["explanation"]
+                    f"Explanation: {q['explanation']}"
                 )
