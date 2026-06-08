@@ -5,20 +5,58 @@ from rag.pdf_loader import load_pdf
 from rag.vector_store import create_vector_store
 
 from orchestration.graph import graph
-
 from agents.student_agent import StudentAgent
 
 
+# ======================================
+# PAGE CONFIG
+# ======================================
+
 st.set_page_config(
-    page_title="AI Test Preparation Engine",
+    page_title="PrepPilot AI",
+    page_icon="🎓",
     layout="wide"
 )
 
-st.title("AI Test Preparation Engine")
+# ======================================
+# SIDEBAR
+# ======================================
 
-# ==========================
+with st.sidebar:
+
+    st.title("🎓 PrepPilot AI")
+
+    st.write(
+        "Your Intelligent Test Preparation Assistant"
+    )
+
+    st.divider()
+
+    st.write(
+        """
+        **Powered By**
+        - Groq
+        - LangGraph
+        - ChromaDB
+        - RAG
+        """
+    )
+
+# ======================================
+# HEADER
+# ======================================
+
+st.title("🎓 PrepPilot AI")
+
+st.caption(
+    "Generate personalized MCQ tests from any syllabus PDF using AI."
+)
+
+st.divider()
+
+# ======================================
 # STUDENT MANAGEMENT
-# ==========================
+# ======================================
 
 student_agent = StudentAgent()
 
@@ -30,7 +68,7 @@ student_options = {
     for s in students
 }
 
-st.subheader("Select Student")
+st.subheader("👨‍🎓 Select Student")
 
 selected_student = st.selectbox(
     "Available Students",
@@ -39,17 +77,19 @@ selected_student = st.selectbox(
 
 student_id = student_options[selected_student]
 
-# ==========================
-# ENROLL NEW STUDENT
-# ==========================
+# ======================================
+# ENROLL STUDENT
+# ======================================
 
-with st.expander("Enroll New Student"):
+with st.expander("➕ Enroll New Student"):
 
     new_name = st.text_input(
         "Student Name"
     )
 
-    if st.button("Enroll Student"):
+    if st.button(
+        "Enroll Student"
+    ):
 
         if new_name.strip():
 
@@ -59,7 +99,8 @@ with st.expander("Enroll New Student"):
             )
 
             st.success(
-                f"Student enrolled successfully! New ID: {new_id}"
+                f"Student enrolled successfully! "
+                f"New ID: {new_id}"
             )
 
             st.rerun()
@@ -70,9 +111,11 @@ with st.expander("Enroll New Student"):
                 "Please enter a valid name."
             )
 
-# ==========================
+# ======================================
 # TEST SETTINGS
-# ==========================
+# ======================================
+
+st.subheader("⚙️ Test Settings")
 
 difficulty = st.selectbox(
     "Difficulty",
@@ -88,11 +131,17 @@ pdf = st.file_uploader(
     type=["pdf"]
 )
 
-# ==========================
-# GENERATE TEST
-# ==========================
+if pdf:
 
-if st.button("Generate Test"):
+    st.success(
+        f"Uploaded: {pdf.name}"
+    )
+
+# ======================================
+# GENERATE TEST
+# ======================================
+
+if st.button("🚀 Generate Test"):
 
     if pdf is None:
 
@@ -127,7 +176,7 @@ if st.button("Generate Test"):
         )
 
     with st.spinner(
-        "Processing syllabus..."
+        "Analyzing syllabus and generating test..."
     ):
 
         docs = load_pdf(
@@ -156,47 +205,61 @@ if st.button("Generate Test"):
         )
 
     st.session_state["questions"] = (
-    result["mcqs"] 
+        result["mcqs"]
     )
+
     st.session_state["results"] = {}
 
-# ==========================
+# ======================================
 # DISPLAY TEST
-# ==========================
+# ======================================
 
 if "questions" in st.session_state:
 
-    questions = st.session_state["questions"]
+    questions = (
+        st.session_state["questions"]
+    )
 
-    # Store answer results permanently
     if "results" not in st.session_state:
-        st.session_state["results"] = {}
 
-    if "score" not in st.session_state:
-        st.session_state["score"] = 0
+        st.session_state["results"] = {}
 
     st.divider()
 
-    st.header("Generated Test")
+    st.header("📝 Generated Test")
+
     score = sum(
         1
         for result in
         st.session_state["results"].values()
         if result["status"] == "correct"
     )
-    st.metric(
-        "Current Score",
-        f"{score}/{len(questions)}"
-    )
 
-    percentage = round(
-        (score / len(questions)) * 100,
-        2
-    )
-    st.metric(
-        "Percentage",
-        f"{percentage}%"
-    )
+    col1, col2 = st.columns(2)
+
+    with col1:
+
+        st.metric(
+            "Current Score",
+            f"{score}/{len(questions)}"
+        )
+
+    with col2:
+
+        percentage = round(
+            (
+                score /
+                len(questions)
+            ) * 100,
+            2
+        )
+
+        st.metric(
+            "Percentage",
+            f"{percentage}%"
+        )
+
+    st.divider()
 
     for i, q in enumerate(questions):
 
@@ -205,7 +268,7 @@ if "questions" in st.session_state:
         )
 
         answer = st.radio(
-            f"{q['question']}",
+            q["question"],
             list(
                 q["options"].keys()
             ),
@@ -227,6 +290,7 @@ if "questions" in st.session_state:
                 }
 
             elif answer == q["correct"]:
+
                 st.session_state["results"][i] = {
                     "status": "correct",
                     "selected": answer
@@ -239,7 +303,10 @@ if "questions" in st.session_state:
                     "selected": answer
                 }
 
-        # Show previously stored result
+        # ======================
+        # DISPLAY RESULT
+        # ======================
+
         if i in st.session_state["results"]:
 
             result = (
@@ -259,9 +326,9 @@ if "questions" in st.session_state:
                 )
 
                 st.write(
-                    f"**Selected Answer:** "
-                    f"{q['correct']}. "
-                    f"{q['options'][q['correct']]}"
+                    f"**Your Answer:** "
+                    f"{result['selected']}. "
+                    f"{q['options'][result['selected']]}"
                 )
 
                 st.info(
@@ -276,6 +343,12 @@ if "questions" in st.session_state:
                 )
 
                 st.write(
+                    f"**Your Answer:** "
+                    f"{result['selected']}. "
+                    f"{q['options'][result['selected']]}"
+                )
+
+                st.write(
                     f"**Correct Answer:** "
                     f"{q['correct']}. "
                     f"{q['options'][q['correct']]}"
@@ -285,3 +358,15 @@ if "questions" in st.session_state:
                     f"Explanation: "
                     f"{q['explanation']}"
                 )
+
+        st.divider()
+
+# ======================================
+# FOOTER
+# ======================================
+
+st.divider()
+
+st.caption(
+    "PrepPilot AI © 2026 | Powered by RAG, LangGraph, ChromaDB and Groq"
+)
